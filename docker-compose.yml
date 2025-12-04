@@ -1,0 +1,69 @@
+services:
+  main_app:
+    container_name: main_app
+    hostname: main_app
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    restart: on-failure
+    env_file:
+      - ./src/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - main_net
+
+  postgres:
+    container_name: postgres
+    hostname: postgres
+    image: postgres:15.6-bullseye
+    env_file:
+      - ./src/.env
+    ports:
+      - "5445:5432"
+    volumes:
+      - ./postgres/migrations:/docker-entrypoint-initdb.d
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres_user -d postgres_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - main_net
+
+  rabbitmq:
+    container_name: rabbitmq
+    hostname: rabbitmq
+    image: rabbitmq:3.13.7-management
+    restart: on-failure
+    env_file:
+      - ./src/.env
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ../../rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ../../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - main_net
+
+volumes:
+  postgres:
+
+networks:
+  main_net:
+    name: main
+    driver: bridge
