@@ -3,17 +3,17 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     DEVELOP: bool = True
-    TITLE: str = 'API'
-    VERSION: str = 'v1.0'
-    DOC_URL: str = '/docs'
-    OPENAPI_URL: str = '/openapi.json'
+    TITLE: str = "API"
+    VERSION: str = "v1.0"
+    DOC_URL: str = "/docs"
+    OPENAPI_URL: str = "/openapi.json"
     SERVER_HOST: str = "127.0.0.1"
     SERVER_PORT: int = 8000
+    PAGINATION_PAGE: int = 1
+    PAGINATION_PAGE_SIZE: int = 25
     WORKERS: int = 1
-    LOG_LEVEL: str = 'debug'
-    LOG_FORMAT: str = (
-        '{"time": "%(asctime)s", "level": "%(levelname)s", "file": "%(name)s", "line": "%(lineno)s", "msg": "%(msg)s"}'
-    )
+    LOG_LEVEL: str = "debug"
+    LOG_FORMAT: str = '{"time": "%(asctime)s", "level": "%(levelname)s", "file": "%(name)s", "line": "%(lineno)s", "msg": "%(msg)s"}'
 
     POSTGRES_USER: str = "postgres_user"
     POSTGRES_PASSWORD: str = "postgres_password"

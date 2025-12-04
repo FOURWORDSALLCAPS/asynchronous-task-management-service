@@ -48,7 +48,7 @@ class TasksDB(Base):
         comment="Время завершения",
     )
     result: Mapped[str] = mapped_column(
-        nullable=False,
+        nullable=True,
         comment="Результат выполнения",
     )
     error_info: Mapped[str] = mapped_column(
