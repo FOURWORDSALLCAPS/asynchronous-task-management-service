@@ -117,6 +117,9 @@ venv.bak/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
+# Alembic
+versions
+
 poetry.toml
 .vscode/launch.json
 .vscode/settings.json
