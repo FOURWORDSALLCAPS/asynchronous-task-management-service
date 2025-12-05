@@ -18,6 +18,23 @@ services:
     networks:
       - main_net
 
+  workers:
+    container_name: workers
+    hostname: workers
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    restart: on-failure
+    env_file:
+      - ./workers/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - main_net
+
   postgres:
     container_name: postgres
     hostname: postgres
