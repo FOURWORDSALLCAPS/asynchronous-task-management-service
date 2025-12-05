@@ -5,11 +5,12 @@ import sys
 from collections.abc import Awaitable
 from typing import Optional, Callable
 
-import aio_pika
+from aio_pika import connect_robust
 from aio_pika.abc import (
     AbstractChannel,
     AbstractRobustConnection,
     AbstractIncomingMessage,
+    ExchangeType as pika_exchange_type,
 )
 from aio_pika.pool import Pool
 
@@ -28,7 +29,7 @@ class RabbitMQEngine:
         self._channel_pool: Optional[Pool] = None
 
     async def get_connection(self) -> AbstractRobustConnection:
-        return await aio_pika.connect_robust(self.amqp_url)
+        return await connect_robust(self.amqp_url)
 
     async def get_channel(self) -> AbstractChannel:
         async with self.connection_pool.acquire() as connection:
@@ -56,38 +57,25 @@ class RabbitMQEngine:
 rabbit_manager = RabbitMQEngine(settings.get_rabbitmq_uri)
 
 
-class ProducerEngine:
-    def __init__(self) -> None:
-        self.connector = rabbit_manager
-
-    async def publish(self, exchange: str, routing_key: str, body: dict) -> None:
-        body_bytes = json.dumps(body).encode("utf-8")
-
-        async with self.connector.channel_pool.acquire() as channel:
-            exchange_obj = await channel.get_exchange(exchange, ensure=True)
-            await exchange_obj.publish(
-                aio_pika.Message(body=body_bytes), routing_key=routing_key
-            )
-
-
-producer = ProducerEngine()
-
-
 class ConsumerEngine:
     def __init__(self) -> None:
         self.connector = rabbit_manager
-        self.callback: Optional[Callable[[dict], Awaitable[None]]] = None
-        self.__consume_tasks: list[asyncio.Task] = []
-        self._is_consuming = False
+        self.queue_callbacks: dict[str, Callable[[dict], Awaitable[None]]] = {}
+        self.consume_tasks: list[asyncio.Task] = []
+        self.is_consuming = False
 
-    def set_callback(self, callback: Callable[[dict], Awaitable[None]]) -> None:
-        self.callback = callback
+    def set_callback(
+        self, queue_name: str, callback: Callable[[dict], Awaitable[None]]
+    ) -> None:
+        self.queue_callbacks[queue_name] = callback
 
     async def _message_handler(self, message: AbstractIncomingMessage) -> None:
         async with message.process():
             try:
                 body = json.loads(message.body.decode())
-                await self.callback(body)
+                queue_name = message.routing_key
+                callback = self.queue_callbacks.get(queue_name)
+                await callback(body)
             except json.JSONDecodeError as e:
                 log.error(
                     f"Ошибка декодирования JSON: {e}, body: {message.body.decode()}"
@@ -95,46 +83,63 @@ class ConsumerEngine:
             except Exception as e:
                 log.error(f"Ошибка обработки сообщения: {e}")
 
-    async def consume(
-        self, queue_name: str, durable: bool = True, prefetch_count: int = 1
+    async def setup_queue(
+        self,
+        queue_name: str,
+        exchange_name: str,
+        durable: bool = True,
+        max_priority: int = None,
     ) -> None:
-        self._is_consuming = True
+        async with self.connector.channel_pool.acquire() as channel:
+            exchange = await channel.declare_exchange(
+                exchange_name, pika_exchange_type.TOPIC, durable=durable
+            )
+
+            queue = await channel.declare_queue(
+                queue_name,
+                durable=durable,
+                auto_delete=not durable,
+                arguments={"x-max-priority": max_priority} if max_priority else None,
+            )
+
+            await queue.bind(exchange, queue_name)
+
+    async def consume(self, queue_name: str, prefetch_count: int = 1) -> None:
+        self.is_consuming = True
 
         async with self.connector.channel_pool.acquire() as channel:
             await channel.set_qos(prefetch_count=prefetch_count)
-            queue = await channel.declare_queue(
-                queue_name, durable=durable, auto_delete=not durable
-            )
+
+            queue = await channel.get_queue(queue_name)
 
             await queue.consume(self._message_handler)
 
             log.info(f"Ожидание сообщений в очереди '{queue_name}'...")
-            print("queue_name", queue_name)
-            while self._is_consuming:
+            while self.is_consuming:
                 await asyncio.sleep(1)
 
     async def consume_multiple(
-        self, queues: list[str], durable: bool = True, prefetch_count: int = 1
+        self, queues: list[str], prefetch_count: int = 1
     ) -> list[asyncio.Task]:
         tasks = []
         for queue_name in queues:
             task = asyncio.create_task(
-                self.consume(queue_name, durable, prefetch_count),
+                self.consume(queue_name, prefetch_count),
                 name=f"consume-{queue_name}",
             )
             tasks.append(task)
-        self.__consume_tasks = tasks
+        self.consume_tasks = tasks
         return tasks
 
     async def stop_consuming(self) -> None:
-        self._is_consuming = False
+        self.is_consuming = False
 
-        if consume_tasks := self.__consume_tasks:
+        if consume_tasks := self.consume_tasks:
             for task in consume_tasks:
                 task.cancel()
-            await asyncio.gather(*self.__consume_tasks, return_exceptions=True)
+            await asyncio.gather(*self.consume_tasks, return_exceptions=True)
 
-            self.__consume_tasks.clear()
+            self.consume_tasks.clear()
 
 
 consumer = ConsumerEngine()

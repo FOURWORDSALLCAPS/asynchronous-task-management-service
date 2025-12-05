@@ -47,12 +47,12 @@ class TaskResponse(TaskCreate):
         description="Время завершения",
         examples=["2025-12-04 12:30:00"],
     )
-    result: str = Field(
+    result: str | None = Field(
         default="",
         description="Результат выполнения",
         examples=["Пробирка 314123 готова"],
     )
-    error_info: str = Field(
+    error_info: str | None = Field(
         default="",
         description="Информация об ошибках",
         examples=["Сбой проверки кода пробирки"],

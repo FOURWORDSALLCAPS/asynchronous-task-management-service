@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     RABBITMQ_DEFAULT_USER: str = "admin"
     RABBITMQ_DEFAULT_PASS: str = "admin"
     RABBITMQ_DEFAULT_VHOST: str = "/"
+    RABBITMQ_HOST: str = "rabbitmq"
+    RABBITMQ_PORT: str = "5672"
 
     @property
     def get_postgres_uri_asyncpg(self):
@@ -34,6 +36,10 @@ class Settings(BaseSettings):
     @property
     def get_postgres_alembic_uri_asyncpg(self):
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@localhost:5445/{self.POSTGRES_DB}"
+
+    @property
+    def get_rabbitmq_uri(self):
+        return f"amqp://{self.RABBITMQ_DEFAULT_USER}:{self.RABBITMQ_DEFAULT_PASS}@{self.RABBITMQ_HOST}:{self.RABBITMQ_PORT}/"
 
 
 settings = Settings(

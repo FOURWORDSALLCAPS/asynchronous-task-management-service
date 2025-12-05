@@ -1,9 +1,11 @@
 import asyncio
 import logging
+import signal
 import sys
 from contextlib import asynccontextmanager
 
-from enums import ExchangeType
+from engines import consumer
+from enums import RoutingType, ExchangeType
 from services import TaskConsumer
 from settings import settings
 
@@ -16,21 +18,43 @@ log.addHandler(stream_handler)
 class WorkerApplication:
     def __init__(self, task_consumer):
         self.task_consumer = task_consumer
+        self.shutdown_event = asyncio.Event()
 
     @asynccontextmanager
     async def lifespan(self):
-        await self.startup()
-        yield
+        loop = asyncio.get_running_loop()
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(sig, self.shutdown_event.set)
 
-        await self.task_consumer.stop()
+        try:
+            await consumer.setup_queue(
+                queue_name=RoutingType.TASK,
+                exchange_name=ExchangeType.TASKS,
+                max_priority=3,
+            )
+            await consumer.setup_queue(
+                queue_name=RoutingType.TASK_CANCELED, exchange_name=ExchangeType.TASKS
+            )
 
-    async def startup(self):
-        await self.task_consumer.start()
-        log.info("Воркеры успешно запущены")
+            consumer.set_callback(
+                queue_name=RoutingType.TASK, callback=self.task_consumer.process_message
+            )
+            consumer.set_callback(
+                queue_name=RoutingType.TASK_CANCELED,
+                callback=self.task_consumer.cancel_task,
+            )
+
+            queues = [RoutingType.TASK, RoutingType.TASK_CANCELED]
+            await consumer.consume_multiple(queues)
+
+            yield
+        finally:
+            await self.task_consumer.stop()
+            await consumer.stop_consuming()
 
     async def run(self):
         async with self.lifespan():
-            await asyncio.sleep(1)
+            await self.shutdown_event.wait()
 
 
 async def main():
