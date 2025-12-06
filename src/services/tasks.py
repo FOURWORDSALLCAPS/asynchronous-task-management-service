@@ -1,5 +1,6 @@
-import asyncio
-from datetime import datetime
+from http import HTTPStatus
+
+from fastapi import HTTPException
 
 from src.dependencies import container
 from src.engines import producer
@@ -8,8 +9,8 @@ from src.repositories import TasksRepository
 from src.schemes import (
     TaskCreateRequest,
     TaskCreateResponse,
-    TasksRequest,
     TaskResponse,
+    TasksResponse,
     BaseQueryPathFilters,
     TaskId,
 )
@@ -27,8 +28,6 @@ class TaskService:
         create_params = {**params.model_dump(), "status": StatusType.NEW}
         task = await self.tasks_repository.create(**create_params)
 
-        await asyncio.sleep(10)
-
         task_id = task.id
         await producer.publish(
             exchange=ExchangeType.TASKS,
@@ -43,48 +42,47 @@ class TaskService:
 
         return TaskCreateResponse(**task.__dict__)
 
-    async def get_tasks(
-        self, *, params: TasksRequest, pagination: BaseQueryPathFilters
-    ) -> list[TaskResponse]:
-        result = [
-            TaskResponse(
-                id=1,
-                name="Задача",
-                description="",
-                priority=params.priority,
-                status=params.status,
-                created_at=datetime.now(),
-                stared_at=None,
-                completed_at=None,
-                result="",
-                error_info="",
-            )
-        ]
-        return result
+    async def get_tasks(self, *, pagination: BaseQueryPathFilters) -> TasksResponse:
+        tasks, pagination_info = await self.tasks_repository.get_tasks(
+            pagination=pagination
+        )
+
+        data = [TaskResponse(**task.__dict__) for task in tasks]
+        return TasksResponse(data=data, pagination=pagination_info)
 
     async def get_task(
         self,
         *,
         task_id: TaskId,
     ) -> TaskResponse:
-        return TaskResponse(
-            id=1,
-            name="Задача",
-            description="",
-            priority=PriorityType.MEDIUM,
-            status=StatusType.PENDING,
-            created_at=datetime.now(),
-            stared_at=None,
-            completed_at=None,
-            result="",
-            error_info="",
-        )
+        task = await self.tasks_repository.get_by(id=task_id)
+        if not task:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail=f"Задача с номером {task_id} не найдена",
+            )
+
+        return TaskResponse(**task.__dict__)
 
     async def delete_task(
         self,
         *,
         task_id: TaskId,
     ) -> bool:
+        task = await self.tasks_repository.get_by(id=task_id)
+        if not task:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail=f"Задача с номером {task_id} не найдена",
+            )
+
+        await producer.publish(
+            exchange=ExchangeType.TASKS,
+            routing_key=RoutingType.TASK_CANCELED,
+            priority=Priority.get_priority_value(PriorityType.HIGH),
+            body={"id": task_id},
+        )
+
         return True
 
     async def get_task_status(
@@ -92,4 +90,11 @@ class TaskService:
         *,
         task_id: TaskId,
     ) -> StatusType:
-        return StatusType.PENDING
+        task = await self.tasks_repository.get_by(id=task_id)
+        if not task:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail=f"Задача с номером {task_id} не найдена",
+            )
+
+        return StatusType(task.status)

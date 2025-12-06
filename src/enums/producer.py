@@ -7,3 +7,4 @@ class ExchangeType(StrEnum):
 
 class RoutingType(StrEnum):
     TASK = "task"
+    TASK_CANCELED = "task_canceled"

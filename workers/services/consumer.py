@@ -75,7 +75,7 @@ class TaskConsumer(BaseWorker):
             log.error(f"Ошибка отправки задачи: {e}")
 
     async def cancel_task(self, message: dict[str]) -> bool:
-        task_id = int(message.get("task_id"))
+        task_id = int(message.get("id"))
 
         if task_id not in self.futures:
             return False
@@ -86,11 +86,11 @@ class TaskConsumer(BaseWorker):
                 future.cancel()
                 try:
                     await asyncio.wait_for(future, timeout=1.0)
-                    await self.tasks_repository.set_task_status(
-                        task_id=task_id, status=StatusType.CANCELLED
-                    )
                 except (asyncio.CancelledError, asyncio.TimeoutError):
                     pass
+                await self.tasks_repository.set_task_status(
+                    task_id=task_id, status=StatusType.CANCELLED
+                )
         elif isinstance(future, futures.Future):
             if task_id in self.cancel_flags:
                 self.cancel_flags[task_id] = True

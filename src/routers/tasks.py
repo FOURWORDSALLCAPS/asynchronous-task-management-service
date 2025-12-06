@@ -6,7 +6,7 @@ from src.schemes import (
     TaskCreateResponse,
     TaskResponse,
     BaseQueryPathFilters,
-    TasksRequest,
+    TasksResponse,
     TaskId,
 )
 from src.services import TaskService
@@ -25,13 +25,12 @@ async def create_task(
     return await task_service.create_task(params=params)
 
 
-@router.get("/", response_model=list[TaskResponse])
+@router.get("/", response_model=TasksResponse)
 async def get_tasks(
-    params: TasksRequest = Depends(),
     pagination: BaseQueryPathFilters = Depends(),
     task_service: TaskService = Depends(),
-) -> list[TaskResponse]:
-    return await task_service.get_tasks(params=params, pagination=pagination)
+) -> TasksResponse:
+    return await task_service.get_tasks(pagination=pagination)
 
 
 @router.get("/{task_id}", response_model=TaskResponse)

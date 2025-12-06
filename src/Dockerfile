@@ -9,7 +9,7 @@ RUN pip install --upgrade pip && \
     pip install poetry && \
     poetry config virtualenvs.create false
 
-COPY ../pyproject.toml pyproject.toml
+COPY src/pyproject.toml pyproject.toml
 
 RUN poetry install --only main
 

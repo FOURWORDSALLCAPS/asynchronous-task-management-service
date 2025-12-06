@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, field_serializer
 
 from src.enums import PriorityType, StatusType
+from src.schemes.base import Pagination
 
 
 class TaskCreate(BaseModel):
@@ -67,12 +68,6 @@ class TaskResponse(TaskCreate):
 class TaskCreateResponse(TaskResponse): ...
 
 
-class TasksRequest(BaseModel):
-    priority: PriorityType = Field(
-        description="Приоритет",
-        examples=[PriorityType.HIGH],
-    )
-    status: StatusType = Field(
-        description="Статус",
-        examples=[StatusType.FAILED],
-    )
+class TasksResponse(BaseModel):
+    data: list[TaskResponse]
+    pagination: Pagination
