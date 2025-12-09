@@ -34,6 +34,10 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     @property
+    def get_test_postgres_uri_asyncpg(self):
+        return "postgresql+asyncpg://test_user:test_password@localhost:5446/test_db"
+
+    @property
     def get_postgres_alembic_uri_asyncpg(self):
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@localhost:5445/{self.POSTGRES_DB}"
 

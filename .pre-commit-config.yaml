@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: mixed-line-ending
         args: [ "--fix=lf" ]
@@ -10,6 +10,7 @@ repos:
       - id: check-toml
       - id: check-added-large-files
       - id: name-tests-test
+        args: ["--django"]
       - id: pretty-format-json
         name: pretty format json
         description: sets a standard for formatting json files.
@@ -20,12 +21,12 @@ repos:
           - "--no-ensure-ascii"
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.5
+    rev: v0.14.8
     hooks:
       - id: ruff
         name: ruff (linter)
         description: Extremely fast Python linter
-        args: [ --fix ]
+        args: [ --fix]
         types: [ python ]
 
       - id: ruff-format

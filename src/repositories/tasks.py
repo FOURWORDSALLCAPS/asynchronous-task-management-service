@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 from sqlalchemy import select, update, and_, func
 
-from src.engines import PostgresEngine
-from src.models import TasksDB
-from src.repositories import BaseRepository
-from src.schemes.base import Pagination
+from engines import PostgresEngine
+from models import TasksDB
+from repositories import BaseRepository
+from schemes.base import Pagination
 
 
 class TasksRepository(BaseRepository):

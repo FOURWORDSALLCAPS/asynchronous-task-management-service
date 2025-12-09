@@ -1,11 +1,11 @@
-from src.schemes.tasks import (
+from .tasks import (
     TaskCreateRequest,
     TaskCreateResponse,
     TaskResponse,
     TasksResponse,
 )
-from src.schemes.types.tasks import TaskId
-from src.schemes.base import BaseQueryPathFilters
+from .types.tasks import TaskId
+from .base import BaseQueryPathFilters, Pagination
 
 __all__ = (
     "TaskCreateRequest",
@@ -14,4 +14,5 @@ __all__ = (
     "TaskId",
     "BaseQueryPathFilters",
     "TasksResponse",
+    "Pagination",
 )

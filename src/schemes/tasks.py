@@ -2,8 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_serializer
 
-from src.enums import PriorityType, StatusType
-from src.schemes.base import Pagination
+from enums import PriorityType, StatusType
+from schemes.base import Pagination
 
 
 class TaskCreate(BaseModel):

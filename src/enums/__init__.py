@@ -1,5 +1,5 @@
-from src.enums.tasks import PriorityType, StatusType, Priority
-from src.enums.producer import ExchangeType, RoutingType
+from .tasks import PriorityType, StatusType, Priority
+from .producer import ExchangeType, RoutingType
 
 
 __all__ = ("PriorityType", "StatusType", "Priority", "ExchangeType", "RoutingType")

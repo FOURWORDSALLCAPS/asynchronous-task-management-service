@@ -13,8 +13,8 @@ from sqlalchemy.exc import (
 )
 from sqlalchemy.orm import InstrumentedAttribute
 
-from src.engines.postgres_storage import PostgresEngine
-from src.settings import settings
+from engines.postgres_storage import PostgresEngine
+from settings import settings
 
 T = TypeVar("T")
 log = logging.getLogger(__name__)
@@ -66,7 +66,6 @@ class BaseRepository(Generic[T]):
     async def create(self, **kwargs: str | UUID | bool | set[UUID] | None) -> T | None:
         if not self.model:
             raise ValueError("Model is not defined for this repository")
-
         try:
             stmt = insert(self.model).values(**kwargs).returning(self.model)
 

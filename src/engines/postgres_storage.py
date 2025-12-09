@@ -15,8 +15,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from src.models.base import Base
-from src.settings import settings
+from models.base import Base
+from settings import settings
 
 log = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler(sys.stderr)

@@ -1,0 +1,60 @@
+[tool.poetry]
+name = "asynchronous-task-management-service"
+version = "0.1.0"
+description = ""
+authors = ["FOURWORDSALLCAPS"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+aio-pika = "^9.5.7"
+asyncpg = "^0.30.0"
+alembic = "^1.17.2"
+rodi = "^2.0.6"
+numpy = "^2.3.5"
+pytest = "^8.4.2"
+pytest-asyncio = "^1.2.0"
+aiosqlite = "^0.21.0"
+sqlalchemy = { extras = ["asyncio"], version = "^2.0.43" }
+uvicorn = { extras = ["standard"], version = "^0.29.0" }
+fastapi = { extras = ["all"], version = "^0.110.2" }
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.5.0"
+ruff = "^0.4.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["src/tests", "workers/tests"]
+pythonpath = ["src"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--color=yes",
+    "--strict-markers",
+    "--strict-config",
+    "--durations=10"
+]
+markers = [
+    "asyncio: marks tests as asyncio",
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow running tests",
+    "fast: Fast running tests",
+    "db: Tests requiring database"
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]

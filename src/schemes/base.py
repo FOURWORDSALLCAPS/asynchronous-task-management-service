@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from fastapi import Query
 
-from src.settings import settings
+from settings import settings
 
 
 class Pagination(BaseModel):

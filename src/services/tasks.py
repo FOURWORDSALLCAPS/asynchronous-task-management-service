@@ -2,11 +2,11 @@ from http import HTTPStatus
 
 from fastapi import HTTPException
 
-from src.dependencies import container
-from src.engines import producer
-from src.enums import PriorityType, StatusType, ExchangeType, RoutingType, Priority
-from src.repositories import TasksRepository
-from src.schemes import (
+from dependencies import container
+from engines import producer
+from enums import PriorityType, StatusType, ExchangeType, RoutingType, Priority
+from repositories import TasksRepository
+from schemes import (
     TaskCreateRequest,
     TaskCreateResponse,
     TaskResponse,
@@ -74,6 +74,16 @@ class TaskService:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
                 detail=f"Задача с номером {task_id} не найдена",
+            )
+
+        if task.status in [
+            StatusType.COMPLETED,
+            StatusType.FAILED,
+            StatusType.CANCELLED,
+        ]:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail=f"Задача с номером {task_id} уже завершилась",
             )
 
         await producer.publish(

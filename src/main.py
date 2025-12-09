@@ -5,9 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
-from src.depends import init_container
-from src.routers import router
-from src.settings import settings
+from depends import init_container
+from routers import router
+from settings import settings
 
 
 @asynccontextmanager

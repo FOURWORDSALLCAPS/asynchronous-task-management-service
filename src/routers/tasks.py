@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
-from src.enums import StatusType
-from src.schemes import (
+from enums import StatusType
+from schemes import (
     TaskCreateRequest,
     TaskCreateResponse,
     TaskResponse,
@@ -9,7 +9,7 @@ from src.schemes import (
     TasksResponse,
     TaskId,
 )
-from src.services import TaskService
+from services import TaskService
 
 router = APIRouter(
     prefix="/tasks",

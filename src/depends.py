@@ -1,6 +1,6 @@
-from src.dependencies import container
-from src.engines import PostgresEngine
-from src.repositories import TasksRepository
+from dependencies import container
+from engines import PostgresEngine
+from repositories import TasksRepository
 
 
 def init_container() -> None:

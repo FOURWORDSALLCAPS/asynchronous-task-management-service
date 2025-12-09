@@ -5,7 +5,7 @@ from aio_pika import connect_robust, Message
 from aio_pika.abc import AbstractChannel, AbstractRobustConnection
 from aio_pika.pool import Pool
 
-from src.settings import settings
+from settings import settings
 
 
 class RabbitMQEngine:
